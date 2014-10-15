@@ -3,14 +3,14 @@ import re
 import sys
 import os
 from serial import Serial
-import thread
-from ..constants import communication
+import threading
+from ..constants.communication import *
 
 class BLE112:
 	
 	def __init__(self, devpath=''):
 		self.devpath = devpath
-		self.mac = ''
+		self.hw_addr = ''
 		self.baud = 115200
 		self.serialdev = None
 		self.isopen = False
@@ -35,32 +35,41 @@ class BLE112:
 		print('    > opening device: ' + self.devpath)
 		# open device
 		try:
-			self.serialdev = Serial(self.devpath, baudrate=self.baud, timeout=20e-3)
+			self.serialdev = Serial(self.devpath, baudrate=self.baud, timeout=30e-3)
 			self.isopen = True
 		except Error:
 			print('   > Error: unable to open device')
 			return
 		
+		# fire up device listener thread
+		self.listener = threading.Thread(target=self.listen)
+		self.listener.start()
+		
 		print('    > determining device MAC')
-		# find device mac
+		# probe device mac
+		self.probeDevAddr()
+		
 
 	def close(self):
 		self.serialdev.close()
 
-	def getDevAddr(self):
+	def probeDevAddr(self):
 		# create packet
-		pkt = createCmdPacket(CID_SYSTEM, CMD_GETADDR, None)
+		pkt = self.createCmdPacket(CID_SYSTEM, CMD_GETADDR, None)
 		# send packet
 		self.sendPacket(pkt)
 		
 
-	def createCmdPacket(classID, cmdID, payload):
+	def createCmdPacket(self, classID, cmdID, payload):
 		# message type (0 = cmd/resp)
 		MT = 0
 		# technology Type (0 = BTSmart)
 		TT = 0
 		# Payload length
-		PLL = len(payload)
+		if payload is None:
+			PLL = 0
+		else:
+			PLL = len(payload)
 		# PLL High (3 bits)
 		LH = (PLL>>8)&0xFF
 		# PLL Low (8 bits)
@@ -82,7 +91,7 @@ class BLE112:
 		
 		return packet
 
-	def unpackPacket(packet):
+	def unpackPacket(self, packet):
 		# message type
 		MT = (packet[0]>>7)&0x01
 		# Command class ID
@@ -97,27 +106,36 @@ class BLE112:
 		return [MT, CID, CMD, PL]
 
 	def sendPacket(self, packet):
-		if not self.isopen:
+		if self.isopen is not True:
 			return
 		self.serialdev.write(packet)
+		
+	def handleIncomingPacket(self, raw):
+		[MT, CID, CMD, PL] = self.unpackPacket(raw)
+		
+		# handle address probe responses
+		if CID is CID_SYSTEM and CMD is CMD_GETADDR:
+			self.hw_addr = PL
+			print('      Device MAC: ' + ''.join('{:02x} '.format(x) for x in self.hw_addr))
 
 	# to be threaded
 	def listen(self):
-
 		while True:
 			# is there any serial data waiting?
-			if self.inWaiting() > 0		
-				rawbytes = self.read(1024, timeout=20e-3)
+			if self.serialdev.inWaiting() > 0:
+				rawbytes = self.serialdev.read(1024)
 				# check length to ensure packet is not malformed
 				if len(rawbytes) < 4:
+					self.serialdev.flush()
 					continue
 				PL_len_high = rawbytes[0]&0x07
 				PL_len_low = rawbytes[1]
-				PL_len = PL_len_high<<7 + PL_len_low
+				PL_len = int(PL_len_high<<7) + int(PL_len_low)
 				if len(rawbytes) is not 4 + PL_len:
+					self.serialdev.flush()
 					continue
-				# parse packet
-				
+				# hand off the packet
+				self.handleIncomingPacket(rawbytes)
 				
 			
 

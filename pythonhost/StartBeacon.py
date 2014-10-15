@@ -9,4 +9,4 @@ beacon.autosetup()
 # --- 
 
 # -- close beacon serial --
-beacon.close()
+#beacon.close()
