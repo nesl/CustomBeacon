@@ -53,6 +53,12 @@ class BLE112:
 	def close(self):
 		self.serialdev.close()
 
+	def setGreenLed(self, val):
+		pass
+
+	def setRedLed(self, val):
+		pass
+
 	def probeDevAddr(self):
 		# create packet
 		pkt = self.createCmdPacket(CID_SYSTEM, CMD_GETADDR, None)
