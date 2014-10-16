@@ -6,6 +6,7 @@ from serial import Serial
 import threading
 import time
 import struct
+import platform
 from ..constants import *
 
 class BLE112:
@@ -109,9 +110,19 @@ class BLE112:
 		self.setMode(GAP_NON_DISCOVERABLE, GAP_NON_CONNECTABLE)
 
 	def autoSetup(self):
-		print('Auto-detecting BLE112 (Linux)...')
-		devlist = os.listdir('/dev')
-		ble_regex = '.*ttyUSB.*'
+		# what OS are we using?
+		local_os = platform.system()
+		if local_os == OSTYPE_LINUX:
+			print('Auto-detecting BLE112 (Linux)...')
+			devlist = os.listdir('/dev')
+			ble_regex = '.*ttyUSB.*'
+		elif local_os == OSTYPE_OSX:
+			print('Auto-detecting BLE112 (OSX)...')
+			devlist = os.listdir('/dev')
+			ble_regex = '.*tty.usbserial.*'
+		else:
+			print('Error: unrecognized host OS')
+			return
 		candidates = []
 		for dev in devlist:
 			check = re.match(ble_regex, dev)
