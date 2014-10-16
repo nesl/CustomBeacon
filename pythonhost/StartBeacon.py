@@ -26,11 +26,11 @@ beacon.setBeaconParams(IBCN_UUID_NESL, IBCN_MAJOR_NESL, 1000)
 # --- enable advertisements ---
 beacon.enableAdv()
 
-"""
 # --- set advertisement rate ---
-beacon.setAdvRate(10)
+# below gives error 0x0212 - invalid param?
+#beacon.setAdvRate(10)
 
-
+"""
 
 
 # --- turn on red LED to indicate advertising ---
