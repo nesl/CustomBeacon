@@ -50,7 +50,7 @@ class BLE112:
 		packet.extend(advTypes)
 		packet.extend([len_payload])
 		packet.extend(payload)
-		print('adv payload = ' + ''.join('{:02x} '.format(x) for x in packet))
+		#print('adv payload = ' + ''.join('{:02x} '.format(x) for x in packet))
 		
 		return packet
 		
@@ -73,9 +73,10 @@ class BLE112:
 		int_ticks_min = desired_interval_ticks-48
 		int_ticks_max = desired_interval_ticks+48
 		
-		# create payload
-		min_bytes = struct.pack('!H', int_ticks_min)
-		max_bytes = struct.pack('!H', int_ticks_max) 
+		# create payload (bytes are little endian!)
+		min_bytes = struct.pack('<H', int_ticks_min)
+		max_bytes = struct.pack('<H', int_ticks_max) 
+		
 		payload = bytearray()
 		payload.extend(min_bytes)
 		payload.extend(max_bytes)
@@ -86,7 +87,7 @@ class BLE112:
 		
 	def setTxPower(self, power):
 		self.createAndSendCmdPacket(CID_HW, CMD_TXPOWER, [power])	
-		self.txpow = power
+		self.txpower = power
 	
 	def setBeaconParams(self, UUID, major, minor):
 		# construct adv data array (adv. types, custom adv. payload)
@@ -96,13 +97,16 @@ class BLE112:
 		payload.extend(struct.pack('!H', major))
 		payload.extend(struct.pack('!H', minor))
 		# determine calibrated transmit power
-		payload.extend([ TXPOW_1M_ARRAY[self.txpow] ])
+		payload.extend([ TXPOW_1M_ARRAY[self.txpower] ])
 		
 		advpkt = self.constructAdvPacket(IBCN_TYPES, payload)
 		self.setAdvData(advpkt)
 
 	def enableAdv(self):
 		self.setMode(GAP_USER_DATA, GAP_NON_CONNECTABLE)
+		
+	def disableAdv(self):
+		self.setMode(GAP_NON_DISCOVERABLE, GAP_NON_CONNECTABLE)
 
 	def autoSetup(self):
 		print('Auto-detecting BLE112 (Linux)...')
@@ -225,14 +229,16 @@ class BLE112:
 	def createAndSendCmdPacket(self, classID, cmdID, payload):
 		pkt = self.createCmdPacket(classID, cmdID, payload)
 		self.sendPacket(pkt)
-		print('sending = ' + ''.join('{:02x} '.format(x) for x in pkt))
+		print('          >> SENDING: ' + ''.join('{:02x} '.format(x) for x in pkt))
 		time.sleep(CMD_WAIT_DEFAULT)
 		
 	def handleIncomingPacket(self, raw):
 		[MT, CID, CMD, PL] = self.unpackPacket(raw)
-		print('MT = %d, CID = %d, CMD = %d, PL = ' % (MT, CID, CMD))
+		PL_str = 'None'
 		if PL is not None:
-			print(''.join('{:02x} '.format(x) for x in PL))
+			PL_str = ''.join('{:02x} '.format(x) for x in PL)
+		print('          << RECEIVED: MT = %d, CID = %d, CMD = %d, PL = %s' % (MT, CID, CMD, PL_str))
+			
 		
 		# handle address probe responses
 		if CID is CID_SYSTEM and CMD is CMD_GETADDR:

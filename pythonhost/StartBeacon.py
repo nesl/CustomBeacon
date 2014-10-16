@@ -1,4 +1,5 @@
 # --- imports ---
+import time
 from cbeaconpkg.objects import *
 from cbeaconpkg.constants import *
 
@@ -9,34 +10,30 @@ print('      CustomBeacon       ')
 print('-------------------------')
 
 # --- create beacon ---
-beacon = BLE112()
-beacon.autoSetup()
+ble = BLE112()
+ble.autoSetup()
 
 # --- turn on the green LED to indicate setup is done ---
-#beacon.setGreenLed(1)
-#beacon.setRedLed(0)
+ble.setGreenLed(1)
+ble.setRedLed(0)
 	
 # --- set transmit power ---
-#beacon.setTxPower(TXPOW_HIGH)
+ble.setTxPower(TXPOW_LOW)
 
 # --- set ibeacon data ---
 # UUID, major, minor
-beacon.setBeaconParams(IBCN_UUID_NESL, IBCN_MAJOR_NESL, 1000)
-
-# --- enable advertisements ---
-beacon.enableAdv()
+ble.setBeaconParams(IBCN_UUID_NESL, IBCN_MAJOR_NESL, 1000)
 
 # --- set advertisement rate ---
 # below gives error 0x0212 - invalid param?
-#beacon.setAdvRate(10)
+ble.setAdvRate(1)
 
-"""
-
+# --- enable advertisements ---
+ble.enableAdv()
 
 # --- turn on red LED to indicate advertising ---
-beacon.setRedLed(1)
-
+ble.setRedLed(1)
 
 # -- close beacon serial --
-#beacon.close()
-"""
+#ble.close()
+
