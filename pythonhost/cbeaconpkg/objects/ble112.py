@@ -130,8 +130,8 @@ class BLE112:
 				candidates.append(dev)
 
 		if len(candidates) is 0:
-			print('    > no devices found')
-			return
+			print('    > no devices found, aborting.')
+			return NOSUCCESS
 
 		print('    > found ' + str(len(candidates)) + ' device(s)')
 		self.devpath = '/dev/' + candidates[0]
@@ -142,7 +142,7 @@ class BLE112:
 			self.isopen = True
 		except Error:
 			print('   > Error: unable to open device')
-			return
+			return NOSUCCESS
 		
 		# fire up device listener thread
 		self.listener = threading.Thread(target=self.listen)
@@ -153,7 +153,7 @@ class BLE112:
 		self.probeDevHealth()
 		if self.devgood is False:
 			print('   > BLE Device has not issued "OK" signal, aborting.')
-			return 1
+			return NOSUCCESS
 		print('       BLE device is "OK"')
 		
 		print('    > determining device MAC')
@@ -168,6 +168,9 @@ class BLE112:
 		
 		# configure the LED pins
 		self.configureLeds()
+
+		# success!
+		return SUCCESS
 
 	def close(self):
 		self.serialdev.close()

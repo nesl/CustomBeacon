@@ -11,30 +11,32 @@ print('-------------------------')
 
 # --- create beacon ---
 ble = BLE112()
-ble.autoSetup()
+res = ble.autoSetup()
 
-# --- turn on the green LED to indicate setup is done ---
-ble.setGreenLed(1)
-ble.setRedLed(0)
-	
-# --- set transmit power ---
-ble.setTxPower(TXPOW_LOW)
+if res == SUCCESS:
 
-# --- set ibeacon data ---
-# UUID, major, minor
-ble.setBeaconParams(IBCN_UUID_NESL, IBCN_MAJOR_NESL, 1000)
+	# --- turn on the green LED to indicate setup is done ---
+	ble.setGreenLed(1)
+	ble.setRedLed(0)
+		
+	# --- set transmit power ---
+	ble.setTxPower(TXPOW_LOW)
 
-# --- set advertisement rate ---
-# below gives error 0x0212 - invalid param?
-ble.setAdvRate(10)
+	# --- set ibeacon data ---
+	# UUID, major, minor
+	ble.setBeaconParams(IBCN_UUID_NESL, IBCN_MAJOR_NESL, 2000)
 
-# --- enable advertisements ---
-ble.enableAdv()
+	# --- set advertisement rate ---
+	# below gives error 0x0212 - invalid param?
+	ble.setAdvRate(10)
 
-# --- turn on red LED to indicate advertising ---
-ble.setRedLed(1)
-ble.setGreenLed(0)
+	# --- enable advertisements ---
+	ble.enableAdv()
 
-# -- close beacon serial --
-#ble.close()
+	# --- turn on red LED to indicate advertising ---
+	ble.setRedLed(1)
+	ble.setGreenLed(0)
+
+	# -- close beacon serial --
+	#ble.close()
 
